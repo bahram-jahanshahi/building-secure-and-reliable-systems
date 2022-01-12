@@ -101,6 +101,54 @@ Auditing primarily serves to detect incorrect authorization usage. This can incl
 - A system can only receive RPCs from a set of designated systems and can only send RPCs to a set of designated systems.
   for example the AWS Security Group: A security group acts as a virtual firewall for your EC2 instances to control inbound and outbound traffic
   ![](images/aws-security-groups.svg)
+
+#### Solutions for Invariants
+**Resilience4J**
+- CircuitBreaker
+```java
+CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+  .failureRateThreshold(50)
+  .slowCallRateThreshold(50)
+  .waitDurationInOpenState(Duration.ofMillis(1000))
+  .slowCallDurationThreshold(Duration.ofSeconds(2))
+  .minimumNumberOfCalls(10)
+  .slidingWindowType(SlidingWindowType.TIME_BASED)
+  .slidingWindowSize(5)
+  .recordException(e -> INTERNAL_SERVER_ERROR
+                 .equals(getResponse().getStatus()))
+  .recordExceptions(IOException.class, TimeoutException.class)
+  .ignoreExceptions(BusinessException.class, OtherBusinessException.class)
+  .build();
+```
+- RateLimiter
+```java
+RateLimiterConfig config = RateLimiterConfig.custom()
+  .limitRefreshPeriod(Duration.ofMillis(1))
+  .limitForPeriod(10)
+  .timeoutDuration(Duration.ofMillis(25))
+  .build();
+```
+- Retry
+```java
+RetryConfig config = RetryConfig.custom()
+    .maxAttempts(2)
+    .waitDuration(Duration.ofMillis(100))
+    .retryOnResult(response -> response.getStatus() == 500)
+    .retryOnException(e -> e instanceof WebServiceException)
+    .retryExceptions(IOException.class, TimeoutException.class)
+    .ignoreExceptions(BunsinessException.class, OtherBunsinessException.class)
+    .build();
+```
+- Bulkhead  
+  The idea behind bulkheads is to set a limit on the number of concurrent calls we make to a remote service. We treat calls to different remote services as different, isolated pools and set a limit on how many calls can be made concurrently.
+```java
+BulkheadConfig config = BulkheadConfig.custom()
+    .maxConcurrentCalls(150)
+    .maxWaitDuration(Duration.ofMillis(500))
+    .build();
+```
+- Cache
+
 ### Mental Models (Abstraction)
 - Highly complex systems are difficult for humans to reason about in a holistic way.
 - Mental models are useful because they simplify reasoning about a complex system.

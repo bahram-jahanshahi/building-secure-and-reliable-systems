@@ -99,7 +99,8 @@ Auditing primarily serves to detect incorrect authorization usage. This can incl
 - If a system’s backend fails to respond to a query after a predetermined amount of time, the system’s frontend gracefully degrades—for example, by responding with an approximate answer.
 - When the load on any component is greater than that component can handle, in order to reduce the risk of cascading failure, that component will serve overload errors rather than crashing.
 - A system can only receive RPCs from a set of designated systems and can only send RPCs to a set of designated systems.
-
+  for example the AWS Security Group: A security group acts as a virtual firewall for your EC2 instances to control inbound and outbound traffic
+  ![](images/aws-security-groups.svg)
 ### Mental Models (Abstraction)
 - Highly complex systems are difficult for humans to reason about in a holistic way.
 - Mental models are useful because they simplify reasoning about a complex system.
